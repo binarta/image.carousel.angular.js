@@ -130,9 +130,7 @@ describe('image carousel', function () {
         });
 
         it('scope', function () {
-            expect(directive.scope).toEqual({
-                name: '@'
-            });
+            expect(directive.scope).toEqual(true);
         });
 
         it('controller', function () {
@@ -226,6 +224,10 @@ describe('image carousel', function () {
 
                     it('expose length on scope', function () {
                         expect(scope.carousel.length).toEqual(payload.length);
+                    });
+
+                    it('expose length on scope.new', function () {
+                        expect(scope.new.length).toEqual(payload.length);
                     });
 
                     it('expose carousel items on scope', function() {

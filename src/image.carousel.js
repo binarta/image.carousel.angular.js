@@ -50,9 +50,7 @@ function FetchImageCarouselFactory(config, scopedRestServiceHandler) {
 function ImageCarouselDirectiveFactory() {
     return {
         restrict: ['E', 'A', 'C'],
-        scope: {
-            name: '@'
-        },
+        scope: true,
         controller: ['$scope', 'fetchImageCarousel', 'updateImageCarousel', ImageCarouselController],
         link: function (scope, els, attrs, ctrl) {
             scope.$watch('name', function () {
@@ -71,6 +69,7 @@ function ImageCarouselController($scope, fetchImageCarousel, updateImageCarousel
         $scope.editable = false;
         fetchImageCarousel($scope, name, function (it) {
             $scope.carousel.length = it.length;
+            $scope.new.length = it.length;
             self.generateItems();
         });
     };
