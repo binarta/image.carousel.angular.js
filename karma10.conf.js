@@ -8,7 +8,7 @@ module.exports = function(config) {
             {pattern:'bower_components/thk-notifications-mock/src/notifications.mock.js'},
             {pattern:'bower_components/thk-rest-client-mock/src/rest.client.mock.js'},
             {pattern:'bower_components/thk-config-mock/src/config.mock.js'},
-            {pattern:'src/**/*.js'},
+            {pattern:'src/image.carousel.js'},
             {pattern:'test/**/*.js'}
         ],
         browsers:['PhantomJS']

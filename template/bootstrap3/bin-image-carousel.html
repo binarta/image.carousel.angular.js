@@ -1,0 +1,11 @@
+<div class="bin-image-carousel">
+    <carousel>
+        <slide ng-repeat="image in ctrl.images">
+            <img bin-image="{{::image.path}}" read-only>
+        </slide>
+    </carousel>
+
+    <div class="image-placeholder" ng-if="editing && ctrl.images.length == 0">
+        <i class="fa fa-camera fa-3x"></i>
+    </div>
+</div>

@@ -1,104 +1,169 @@
-angular.module('image.carousel', [])
-    .factory('updateImageCarousel', ['config', 'scopedRestServiceHandler', 'topicMessageDispatcher', UpdateImageCarouselFactory])
-    .factory('fetchImageCarousel', ['config', 'scopedRestServiceHandler', FetchImageCarouselFactory])
-    .directive('imageCarousel', ImageCarouselDirectiveFactory);
+(function () {
+    angular.module('image.carousel', ['config', 'image-management', 'rest.client', 'toggle.edit.mode', 'notifications'])
+        .service('binImageCarousel', ['$q', '$filter', 'config', 'imageManagement', 'restServiceHandler', BinImageCarouselService])
+        .controller('binImageCarouselController', ['$scope', '$element', 'binImageCarousel', 'editMode', 'editModeRenderer', '$templateCache', BinImageCarouselController])
+        .directive('binImageCarousel', ['$templateCache', 'ngRegisterTopicHandler', BinImageCarouselDirective]);
 
-function UpdateImageCarouselFactory(config, scopedRestServiceHandler, topicMessageDispatcher) {
-    return function ($scope, carousel, success) {
-        scopedRestServiceHandler({
-            scope: $scope,
-            params: {
-                method: 'PUT',
-                url: (config.baseUri || '') + 'api/entity/image-carousel',
-                data: {
-                    namespace: config.namespace,
-                    name: carousel.name,
-                    length: carousel.length - 0
-                },
-                withCredentials: true
+    function BinImageCarouselService($q, $filter, config, imageManagement, rest) {
+        this.getImages = function (args) {
+            var deferred = $q.defer();
+            var items = [];
+            if (args && args.prefetchedItems) items = args.prefetchedItems;
+            deferred.resolve(sanitizeItems(items));
+            return deferred.promise;
+        };
+
+        this.addImage = function (args) {
+            var deferred = $q.defer();
+
+            imageManagement.fileUpload({
+                dataType: 'json',
+                add: function(e, d) {
+                    var violations = imageManagement.validate(d);
+                    if (violations.length > 0) deferred.reject(violations);
+                    else {
+                        imageManagement.upload({
+                            file: d,
+                            code: args.carouselId,
+                            imageType: 'foreground',
+                            carouselImage: true
+                        }).then(function (result) {
+                            result.id = convertPathToId(result.path);
+                            deferred.resolve(result);
+                        }, function (reason) {
+                            violations.push(reason);
+                            deferred.reject(violations);
+                        }, function (update) {
+                            deferred.notify(update);
+                        });
+                    }
+                }
+            });
+            imageManagement.triggerFileUpload();
+
+            return deferred.promise;
+        };
+
+        this.deleteImage = function (id) {
+            return rest({
+                params: {
+                    method: 'DELETE',
+                    url: config.baseUri + 'api/entity/catalog-item?id=' + encodeURIComponent(id),
+                    withCredentials: true
+                }
+            });
+        };
+
+        function sanitizeItems(items) {
+            var images = $filter('orderBy')(items, 'priority');
+            angular.forEach(images, function (image) {
+                image.path = convertIdToPath(image.id);
+            });
+            return images;
+        }
+
+        function convertIdToPath(id) {
+            return id.replace(/^\/+/, '');
+        }
+
+        function convertPathToId(path) {
+            return '/' + path;
+        }
+    }
+
+    function BinImageCarouselDirective($templateCache, topics) {
+        return {
+            restrict: 'A',
+            scope: {
+                id: '=binImageCarousel',
+                items: '='
             },
-            success: function () {
-                success();
-                topicMessageDispatcher.fire('system.success', {
-                    code: 'image.carousel.update.success',
-                    default: 'Image Carousel Updated!'
+            controller: 'binImageCarouselController',
+            controllerAs: 'ctrl',
+            bindToController: true,
+            template: $templateCache.get('bin-image-carousel'),
+            link: function (scope) {
+                topics(scope, 'edit.mode', function (editModeActive) {
+                    scope.editing = editModeActive;
                 });
             }
-        });
-    }
-}
-
-function FetchImageCarouselFactory(config, scopedRestServiceHandler) {
-    return function ($scope, name, presenter) {
-        scopedRestServiceHandler({
-            scope: $scope,
-            params: {
-                method: 'GET',
-                headers:{
-                    'x-namespace':config.namespace
-                },
-                url: (config.baseUri || '') + 'api/entity/image-carousel?name=' + name
-            },
-            success: presenter,
-            notFound: function() {
-                presenter({length:0});
-            }
-        });
-    }
-}
-
-function ImageCarouselDirectiveFactory() {
-    return {
-        restrict: ['E', 'A', 'C'],
-        scope: true,
-        controller: ['$scope', 'fetchImageCarousel', 'updateImageCarousel', ImageCarouselController],
-        link: function (scope, els, attrs, ctrl) {
-            scope.$watch('name', function () {
-                ctrl.init(scope.name);
-            });
         }
-    };
-}
-
-function ImageCarouselController($scope, fetchImageCarousel, updateImageCarousel) {
-    var self = this;
-
-    this.init = function (name) {
-        $scope.new = {};
-        $scope.carousel = {name: name};
-        $scope.editable = false;
-        fetchImageCarousel($scope, name, function (it) {
-            $scope.carousel.length = it.length;
-            $scope.new.length = it.length;
-            self.generateItems();
-        });
-    };
-
-    this.generateItems = function () {
-        var items = [];
-        for (var i = 0; i < $scope.carousel.length; i++)
-            items.push({
-                index: i,
-                path: self.toPath(i)
-            });
-        $scope.carousel.items = items;
-    };
-
-    this.toPath = function (idx) {
-        var prefix = 'carousels';
-        if ($scope.carousel.name.lastIndexOf('/', 0) != 0) prefix += '/';
-        return prefix + $scope.carousel.name + '/' + idx + '.img';
-    };
-
-    $scope.edit = function () {
-        $scope.editable = !$scope.editable;
-    };
-
-    $scope.submit = function () {
-        $scope.carousel.length = $scope.new.length;
-        $scope.carousel.length -= 0;
-        updateImageCarousel($scope, $scope.carousel, function () {
-            self.generateItems();
-        });
     }
-}
+
+    function BinImageCarouselController($scope, $element, binImageCarousel, editMode, editModeRenderer, $templateCache) {
+        var self = this;
+        var limit = 10;
+
+        binImageCarousel.getImages({
+            carouselId: self.id,
+            prefetchedItems: self.items
+        }).then(function (images) {
+            self.images = images;
+
+            editMode.bindEvent({
+                scope: $scope,
+                element: $element,
+                permission: 'edit.mode',
+                onClick: onEdit
+            });
+        });
+
+        function onEdit() {
+            var scope = $scope.$new();
+            scope.images = self.images;
+
+            scope.addImage = function () {
+                resetViolation();
+
+                if (self.images.length >= 10) {
+                    scope.violations.push('images.upperbound');
+                } else {
+                    binImageCarousel.addImage({carouselId: self.id}).then(function (result) {
+                        self.images.push(result);
+                    }, function (violations) {
+                        scope.violations = violations;
+                    }, function () {
+                        scope.working = true;
+                    }).finally(function () {
+                        scope.working = false;
+                    });
+                }
+            };
+
+            scope.deleteImage = function (image) {
+                resetViolation();
+
+                scope.working = true;
+                binImageCarousel.deleteImage(image.id).then(function () {
+                    if (self.images.indexOf(image) != -1) self.images.splice(self.images.indexOf(image), 1);
+                    scope.openedImage = undefined;
+                }).finally(function () {
+                    scope.working = false;
+                });
+            };
+            
+            scope.openImage = function (image) {
+                resetViolation();
+                scope.openedImage = image;
+            };
+
+            scope.closeImage = function () {
+                resetViolation();
+                scope.openedImage = undefined;
+            };
+            
+            scope.close = editModeRenderer.close;
+
+            if (self.images.length == 0) scope.addImage();
+
+            editModeRenderer.open({
+                template: $templateCache.get('bin-image-carousel-edit'),
+                scope: scope
+            });
+
+            function resetViolation() {
+                scope.violations = [];
+            }
+        }
+    }
+})();

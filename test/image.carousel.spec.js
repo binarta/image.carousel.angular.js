@@ -1,314 +1,419 @@
 describe('image carousel', function () {
     beforeEach(module('image.carousel'));
-    beforeEach(module('notifications'));
-    beforeEach(module('rest.client'));
-    beforeEach(module('config'));
 
-    beforeEach(inject(function(config) {
-        config.namespace = 'namespace';
+    var $rootScope;
+    var initialItems = [
+        {
+            id: '/item/id/1.img',
+            priority: 1
+        }, {
+            id: '/item/id/3.img',
+            priority: 3
+        }, {
+            id: '/item/id/2.img',
+            priority: 2
+        }
+    ];
+    var images = [
+        {
+            path: 'item/id/1.img',
+            id: '/item/id/1.img',
+            priority: 1
+        }, {
+            path: 'item/id/2.img',
+            id: '/item/id/2.img',
+            priority: 2
+        }, {
+            path: 'item/id/3.img',
+            id: '/item/id/3.img',
+            priority: 3
+        }
+    ];
+
+    beforeEach(inject(function (_$rootScope_) {
+        $rootScope = _$rootScope_;
     }));
 
-    describe('update-image-carousel service', function () {
-        var rest, success;
-        var scope = 'scope';
-        var carousel = {
-            name: 'name',
-            length: 2
-        };
+    describe('binImageCarousel service', function () {
+        var service, imageManagement;
 
-        beforeEach(inject(function (updateImageCarousel, scopedRestServiceHandlerMock) {
-            rest = scopedRestServiceHandlerMock;
-            success = false;
-            updateImageCarousel(scope, carousel, function() {
-                success = true;
-            });
+        beforeEach(inject(function (binImageCarousel, _imageManagement_) {
+            service = binImageCarousel;
+            imageManagement = _imageManagement_;
         }));
 
-        it('performs PUT request', inject(function (config) {
-            expect(rest.context.scope).toEqual(scope);
-            expect(rest.context.params.method).toEqual('PUT');
-            expect(rest.context.params.url).toEqual('api/entity/image-carousel');
-            expect(rest.context.params.data).toEqual({
-                namespace: config.namespace,
-                name: carousel.name,
-                length: carousel.length
-            });
-            expect(rest.context.params.withCredentials).toEqual(true);
-        }));
+        describe('on get images', function () {
+            var images;
 
-        it('performs PUT request with baseUri', inject(function (config, updateImageCarousel, scopedRestServiceHandlerMock) {
-            config.baseUri = 'http://host/context/';
-            rest = scopedRestServiceHandlerMock;
-            success = false;
-            updateImageCarousel(scope, carousel, function() {
-                success = true;
-            });
-            expect(rest.context.params.url).toEqual(config.baseUri + 'api/entity/image-carousel');
-        }));
-
-        describe('success', function () {
-            var dispatcher;
-
-            beforeEach(inject(function (topicMessageDispatcherMock, scopedRestServiceHandlerMock) {
-                dispatcher = topicMessageDispatcherMock;
-                scopedRestServiceHandlerMock.context.success();
-            }));
-
-            it('invokes callback', function() {
-                expect(success).toEqual(true);
-            });
-
-            it('raise success notification', function () {
-                expect(dispatcher['system.success']).toEqual({
-                    code: 'image.carousel.update.success',
-                    default: 'Image Carousel Updated!'
-                });
-            });
-        });
-    });
-
-    describe('fetch-image-carousel service', function () {
-        var rest, carousel;
-        var scope = 'scope';
-        var name = "name";
-
-        beforeEach(inject(function (fetchImageCarousel, scopedRestServiceHandlerMock) {
-            rest = scopedRestServiceHandlerMock;
-            fetchImageCarousel(scope, name, function (it) {
-                carousel = it;
-            });
-        }));
-
-        it('performs GET request', inject(function (config) {
-            expect(rest.context.scope).toEqual(scope);
-            expect(rest.context.params.method).toEqual('GET');
-            expect(rest.context.params.headers['x-namespace']).toEqual(config.namespace);
-            expect(rest.context.params.url).toEqual('api/entity/image-carousel?name=' + name);
-        }));
-
-        it('performs GET request with baseUri', inject(function (config, fetchImageCarousel, scopedRestServiceHandlerMock) {
-            config.baseUri = 'http://host/context/';
-            rest = scopedRestServiceHandlerMock;
-            fetchImageCarousel(scope, name, function (it) {
-                carousel = it;
-            });
-            expect(rest.context.params.url).toEqual(config.baseUri + 'api/entity/image-carousel?name=' + name);
-        }));
-
-        describe('success', function () {
-            var payload = 'payload';
-
-            beforeEach(inject(function (scopedRestServiceHandlerMock) {
-                scopedRestServiceHandlerMock.context.success(payload);
-            }));
-
-            it('present carousel', function () {
-                expect(carousel).toEqual(payload);
-            });
-        });
-
-        describe('not found', function() {
-            beforeEach(inject(function (scopedRestServiceHandlerMock) {
-                scopedRestServiceHandlerMock.context.notFound();
-            }));
-
-            it('expose carousel with 0 length', function() {
-                expect(carousel).toEqual({length:0});
-            });
-        });
-    });
-
-    describe('image-carousel directive', function () {
-        var directive;
-
-        beforeEach(inject(function () {
-            directive = ImageCarouselDirectiveFactory();
-        }));
-
-        it('restricted on', function () {
-            expect(directive.restrict).toEqual(['E', 'A', 'C']);
-        });
-
-        it('scope', function () {
-            expect(directive.scope).toEqual(true);
-        });
-
-        it('controller', function () {
-            expect(directive.controller).toEqual(['$scope', 'fetchImageCarousel', 'updateImageCarousel', ImageCarouselController]);
-        });
-
-        describe('on link', function () {
-            var scope, els, attrs, ctrl, watches;
-
-            beforeEach(function () {
-                watches = {};
-                scope = {
-                    name: '/carousel/name',
-                    $watch: function (expression, callback) {
-                        watches[expression] = callback;
-                    }
-                };
-                ctrl = {init: function (name) {
-                    this.name = name;
-                }};
-                directive.link(scope, els, attrs, ctrl);
-            });
-
-            it('controller not initialized', function () {
-                expect(ctrl.name).toEqual(undefined);
-            });
-
-            describe('on triggered watch', function () {
+            describe('with initial items', function () {
                 beforeEach(function () {
-                    watches['name']();
+                    images = undefined;
+
+                    service.getImages({
+                        prefetchedItems: initialItems
+                    }).then(function (result) {
+                        images = result;
+                    });
                 });
 
-                it('init controller', function () {
-                    expect(ctrl.name).toEqual(scope.name);
+                it('items are ordered and image paths are added', function () {
+                    $rootScope.$digest();
+
+                    expect(images).toEqual(images);
                 });
+            });
+
+        });
+
+        describe('on add image', function () {
+            var uploadDeferred, addImageResolved, addImageRejected;
+
+            beforeEach(inject(function ($q) {
+                addImageResolved = undefined;
+                addImageRejected = undefined;
+
+                uploadDeferred = $q.defer();
+                imageManagement.upload.andReturn(uploadDeferred.promise);
+
+                service.addImage({
+                    carouselId: '/carousel/id'
+                }).then(function (result) {
+                    addImageResolved = result;
+                }, function (violations) {
+                    addImageRejected = violations;
+                });
+            }));
+
+            it('fileUpload is set up', function () {
+                expect(imageManagement.fileUpload).toHaveBeenCalledWith({
+                    dataType: 'json',
+                    add: jasmine.any(Function)
+                });
+            });
+
+            it('fileUpload is triggered', function () {
+                expect(imageManagement.triggerFileUpload).toHaveBeenCalled();
+            });
+
+            describe('when valid file is selected', function () {
+                var file = 'file';
+
+                beforeEach(function () {
+                    imageManagement.validate.andReturn([]);
+                    imageManagement.fileUpload.calls[0].args[0].add(null, file);
+                });
+
+                it('file is validated', function () {
+                    expect(imageManagement.validate).toHaveBeenCalledWith(file);
+                });
+
+                it('image is uploading', function () {
+                    expect(imageManagement.upload).toHaveBeenCalledWith({
+                        file: file,
+                        code: '/carousel/id',
+                        imageType: 'foreground',
+                        carouselImage: true
+                    });
+                });
+
+                describe('on upload success', function () {
+                    beforeEach(function () {
+                        uploadDeferred.resolve({path: 'path/to/image.img'});
+
+                        $rootScope.$digest();
+                    });
+
+                    it('image data is returned', function () {
+                        expect(addImageResolved).toEqual({
+                            path: 'path/to/image.img',
+                            id: '/path/to/image.img'
+                        });
+                    });
+                });
+
+                describe('on upload failed', function () {
+                    beforeEach(function () {
+                        uploadDeferred.reject('upload.failed');
+
+                        $rootScope.$digest();
+                    });
+
+                    it('violation is returned', function () {
+                        expect(addImageRejected).toEqual(['upload.failed']);
+                    });
+                });
+            });
+
+            describe('when invalid file is selected', function () {
+                var file = 'file';
+                var violation = ['invalid'];
+
+                beforeEach(function () {
+                    imageManagement.validate.andReturn(violation);
+                    imageManagement.fileUpload.calls[0].args[0].add(null, file);
+
+                    $rootScope.$digest();
+                });
+
+                it('violation is returned', function () {
+                    expect(addImageRejected).toEqual(violation);
+                });
+            });
+        });
+
+        describe('on delete image', function () {
+            var rest, restDeferred, imageDeleted;
+
+            beforeEach(inject(function ($q, restServiceHandler, config) {
+                rest = restServiceHandler;
+                config.baseUri = 'base/uri/';
+
+                restDeferred = $q.defer();
+                rest.andReturn(restDeferred.promise);
+
+                service.deleteImage('/image/id').then(function () {
+                    imageDeleted = true;
+                });
+            }));
+
+            it('rest handler is called', function () {
+                expect(rest).toHaveBeenCalledWith({
+                    params: {
+                        method: 'DELETE',
+                        url: 'base/uri/api/entity/catalog-item?id=%2Fimage%2Fid',
+                        withCredentials: true
+                    }
+                });
+            });
+
+            it('promise is returned', function () {
+                restDeferred.resolve();
+                $rootScope.$digest();
+
+                expect(imageDeleted).toBeTruthy();
             });
         });
     });
 
-    describe('ImageCarouselController', function () {
-        var scope, ctrl, updater, fetcher, name;
+    describe('binImageCarouselController', function () {
+        var ctrl, scope, element, service, editMode, editModeRenderer;
+        var getImagesDeferred, addImageDeferred, deleteImageDeferred;
+        var carouselId = '/carousel/id';
 
-        beforeEach(inject(function ($controller) {
-            name = 'carousel-name';
-            scope = {};
-            updater = {};
-            fetcher = {};
-            ctrl = $controller(ImageCarouselController, {
+        beforeEach(inject(function ($controller, $q, _editMode_, _editModeRenderer_) {
+            editMode = _editMode_;
+            editModeRenderer = _editModeRenderer_;
+
+            getImagesDeferred = $q.defer();
+            addImageDeferred = $q.defer();
+            deleteImageDeferred = $q.defer();
+
+            scope = $rootScope.$new();
+            element = 'element';
+            service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
+            service.getImages.andReturn(getImagesDeferred.promise);
+            service.addImage.andReturn(addImageDeferred.promise);
+            service.deleteImage.andReturn(deleteImageDeferred.promise);
+
+            ctrl = $controller('binImageCarouselController', {
                 $scope: scope,
-                updateImageCarousel: function (scope, carousel, success) {
-                    updater.scope = scope;
-                    updater.carousel = carousel;
-                    updater.success = success;
-                },
-                fetchImageCarousel: function (scope, name, presenter) {
-                    fetcher.scope = scope;
-                    fetcher.name = name;
-                    fetcher.presenter = presenter;
-                }
+                $element: element,
+                binImageCarousel: service
+            }, {
+                id: carouselId
             });
         }));
 
-        describe('on init', function () {
+        it('images are requested', function () {
+            expect(service.getImages).toHaveBeenCalledWith({
+                carouselId: carouselId,
+                prefetchedItems: undefined
+            });
+        });
+
+        describe('with initial items', function () {
+            beforeEach(inject(function ($controller) {
+                ctrl = $controller('binImageCarouselController', {
+                    $scope: scope,
+                    $element: element,
+                    binImageCarousel: service
+                }, {
+                    id: carouselId,
+                    items: initialItems
+                });
+            }));
+
+            it('images are requested', function () {
+                expect(service.getImages).toHaveBeenCalledWith({
+                    carouselId: carouselId,
+                    prefetchedItems: initialItems
+                });
+            });
+        });
+
+        describe('with images', function () {
             beforeEach(function () {
-                ctrl.init(name);
+                getImagesDeferred.resolve(images);
+                $rootScope.$digest();
             });
 
-            it('expose name on scope', function () {
-                expect(scope.carousel.name).toEqual(name);
+            it('images are on controller', function () {
+                expect(ctrl.images).toEqual(images);
             });
 
-            it('editable mode disabled', function () {
-                expect(scope.editable).toEqual(false);
+            it('edit mode event is bound', function () {
+                expect(editMode.bindEvent).toHaveBeenCalledWith({
+                    scope: scope,
+                    element: element,
+                    permission: 'edit.mode',
+                    onClick: jasmine.any(Function)
+                });
             });
 
-            describe('fetch details', function () {
-                it('passes scope', function () {
-                    expect(fetcher.scope).toEqual(scope);
+            describe('on edit', function () {
+                beforeEach(function () {
+                    editMode.bindEvent.calls[0].args[0].onClick();
                 });
 
-                it('passes name', function () {
-                    expect(fetcher.name).toEqual(name);
+                it('editModeRenderer is called', function () {
+                    expect(editModeRenderer.open).toHaveBeenCalled();
                 });
 
-                describe('success', function () {
-                    var payload = {length: 5};
+                describe('with renderer scope', function () {
+                    var rendererScope;
 
                     beforeEach(function () {
-                        fetcher.presenter(payload);
+                        rendererScope = editModeRenderer.open.calls[0].args[0].scope;
                     });
 
-                    it('expose length on scope', function () {
-                        expect(scope.carousel.length).toEqual(payload.length);
+                    it('images are on scope', function () {
+                        rendererScope.images = ctrl.images;
                     });
 
-                    it('expose length on scope.new', function () {
-                        expect(scope.new.length).toEqual(payload.length);
+                    describe('on add image', function () {
+                        beforeEach(function () {
+                            rendererScope.addImage();
+                        });
+
+                        it('working', function () {
+                            addImageDeferred.notify();
+                            rendererScope.$digest();
+
+                            expect(rendererScope.working).toBeTruthy();
+                        });
+
+                        it('add image on service is called', function () {
+                            expect(service.addImage).toHaveBeenCalledWith({
+                                carouselId: carouselId
+                            });
+                        });
+                        
+                        it('on success', function () {
+                            var image = {
+                                id: '/new/image',
+                                path: 'new/image'
+                            };
+
+                            addImageDeferred.resolve(image);
+                            rendererScope.$digest();
+
+                            expect(ctrl.images[3]).toEqual(image);
+                            expect(rendererScope.working).toBeFalsy();
+                        });
+
+                        it('on failed', function () {
+                            var violations = ['reason'];
+
+                            addImageDeferred.reject(violations);
+                            rendererScope.$digest();
+
+                            expect(rendererScope.violations).toEqual(violations);
+                            expect(rendererScope.working).toBeFalsy();
+                        });
+
+                        describe('when limit is reached', function () {
+                            beforeEach(function () {
+                                ctrl.images = [];
+                                for(var i = 1; i <= 10; i ++) {
+                                    ctrl.images.push({
+                                        path: 'item/id/' + i + '.img',
+                                        id: '/item/id/' + i + '.img',
+                                        priority: i
+                                    });
+                                }
+                            });
+
+                            it('add image returns violation', function () {
+                                rendererScope.addImage();
+
+                                expect(rendererScope.violations).toEqual(['images.upperbound']);
+                            });
+                        });
                     });
 
-                    it('expose carousel items on scope', function() {
-                        expect(scope.carousel.items).toEqual([
-                            {index:0, path:'carousels/carousel-name/0.img'},
-                            {index:1, path:'carousels/carousel-name/1.img'},
-                            {index:2, path:'carousels/carousel-name/2.img'},
-                            {index:3, path:'carousels/carousel-name/3.img'},
-                            {index:4, path:'carousels/carousel-name/4.img'}
-                        ]);
+                    describe('on delete image', function () {
+                        var image;
+
+                        beforeEach(function () {
+                            image = ctrl.images[0];
+
+                            rendererScope.deleteImage(image);
+                        });
+
+                        it('working', function () {
+                            expect(rendererScope.working).toBeTruthy();
+                        });
+
+                        it('delete image on service is called', function () {
+                            expect(service.deleteImage).toHaveBeenCalledWith(image.id);
+                        });
+
+                        it('on success', function () {
+                            deleteImageDeferred.resolve();
+                            rendererScope.$digest();
+
+                            expect(ctrl.images[0]).not.toEqual(image);
+                            expect(rendererScope.openedImage).toBeUndefined();
+                            expect(rendererScope.working).toBeFalsy();
+                        });
+                    });
+
+                    it('on open image', function () {
+                        rendererScope.openImage('image');
+
+                        expect(rendererScope.openedImage).toEqual('image');
+                    });
+
+                    it('on close image', function () {
+                        rendererScope.closeImage();
+
+                        expect(rendererScope.openedImage).toBeUndefined();
+                    });
+
+                    it('on close', function () {
+                        rendererScope.close();
+
+                        expect(editModeRenderer.close).toHaveBeenCalled();
                     });
                 });
             });
         });
 
-        describe('on init when name has a leading slash', function() {
+        describe('when there are no images', function () {
             beforeEach(function () {
-                name = '/' + name;
-                ctrl.init(name);
+                getImagesDeferred.resolve([]);
+                $rootScope.$digest();
             });
 
-            describe('success', function () {
-                var payload = {length: 1};
-
+            describe('on edit', function () {
                 beforeEach(function () {
-                    fetcher.presenter(payload);
+                    editMode.bindEvent.calls[0].args[0].onClick();
                 });
 
-                it('expose carousel items on scope', function() {
-                    expect(scope.carousel.items).toEqual([
-                        {index:0, path:'carousels/carousel-name/0.img'}
-                    ]);
-                });
-            });
-        });
-
-        describe('on edit', function () {
-            beforeEach(function () {
-                scope.edit();
-            });
-
-            it('editable mode enabled', function () {
-                expect(scope.editable).toEqual(true);
-            });
-        });
-
-        describe('on submit', function () {
-            describe('perform', function () {
-                beforeEach(function () {
-                    scope.new = {length:3};
-                    scope.carousel = {
-                        name: '/carousel/name'
-                    };
-                    scope.submit();
-                });
-
-                it('perform PUT request', function () {
-                    expect(updater.scope).toEqual(scope);
-                    expect(updater.carousel).toEqual({
-                        name: scope.carousel.name,
-                        length: scope.carousel.length
+                it('add image on service is called', function () {
+                    expect(service.addImage).toHaveBeenCalledWith({
+                        carouselId: carouselId
                     });
-                });
-
-                describe('success', function() {
-                    beforeEach(function() {
-                        updater.success();
-                    });
-
-                    it('update items', function() {
-                        expect(scope.carousel.items.length).toEqual(3);
-                    });
-                });
-            });
-
-            describe('ensure length', function () {
-                it('is converted from string to int', function () {
-                    scope.new = {length:'3'};
-                    scope.carousel = {};
-                    scope.submit();
-                    expect(updater.carousel.length).toEqual(3);
                 });
             });
         });

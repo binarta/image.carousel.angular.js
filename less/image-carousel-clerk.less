@@ -1,0 +1,65 @@
+#bin-menu .bin-image-carousel {
+  .image {
+    height: 100px;
+    margin-bottom: 15px;
+    text-align: center;
+
+    &:before {
+      content: '';
+      height: 100%;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    img {
+      max-height: 100%;
+      width: auto;
+      display: inline-block;
+      vertical-align: middle;
+      box-shadow: none;
+
+      transition-timing-function: ease;
+      transition-duration: 150ms;
+      transition-property: transform, box-shadow;
+    }
+
+    &:hover {
+      cursor: pointer;
+
+      img {
+        box-shadow: @bin-box-shadow;
+        transform: scale(1.05, 1.05);
+      }
+    }
+  }
+
+  .image-add {
+    button {
+      height: 100%;
+      width: 100%;
+      background: none;
+      color: @bin-gray;
+      border: 4px dashed @bin-gray;
+      transition: color 150ms ease, border 150ms ease;
+
+      &:hover {
+        color: darken(@bin-gray, 5%);
+        border-color: darken(@bin-gray, 5%);
+      }
+    }
+  }
+
+  .image-opened {
+    img {
+      display: block;
+      max-height: 400px;
+      margin: 0 auto;
+    }
+  }
+
+  @media(min-width: @screen-sm-min) {
+    .image {
+      height: 150px;
+    }
+  }
+}
