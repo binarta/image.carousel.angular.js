@@ -81,7 +81,7 @@
             controller: 'binImageCarouselController',
             controllerAs: 'ctrl',
             bindToController: true,
-            template: $templateCache.get('bin-image-carousel'),
+            template: $templateCache.get('bin-image-carousel.html'),
             link: function (scope) {
                 topics(scope, 'edit.mode', function (editModeActive) {
                     scope.editing = editModeActive;
@@ -157,7 +157,7 @@
             if (self.images.length == 0) scope.addImage();
 
             editModeRenderer.open({
-                template: $templateCache.get('bin-image-carousel-edit'),
+                template: $templateCache.get('bin-image-carousel-edit.html'),
                 scope: scope
             });
 
