@@ -2,6 +2,7 @@
     angular.module('image.carousel', ['config', 'image-management', 'rest.client', 'toggle.edit.mode', 'notifications'])
         .service('binImageCarousel', ['$q', '$filter', 'config', 'imageManagement', 'restServiceHandler', BinImageCarouselService])
         .controller('binImageCarouselController', ['$scope', '$element', 'binImageCarousel', 'editMode', 'editModeRenderer', '$templateCache', BinImageCarouselController])
+        .controller('binImageCarouselHeroController', ['binImageCarousel', BinImageCarouselHeroController])
         .directive('binImageCarousel', ['$templateCache', 'ngRegisterTopicHandler', BinImageCarouselDirective]);
 
     function BinImageCarouselService($q, $filter, config, imageManagement, rest) {
@@ -165,5 +166,18 @@
                 scope.violations = [];
             }
         }
+    }
+
+    function BinImageCarouselHeroController(binImageCarousel) {
+        var self = this;
+
+        this.init = function (args) {
+            binImageCarousel.getImages({
+                carouselId: args.id,
+                prefetchedItems: args.items
+            }).then(function (images) {
+                if (images.length > 0) self.image = images[0];
+            });
+        };
     }
 })();

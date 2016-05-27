@@ -418,4 +418,44 @@ describe('image carousel', function () {
             });
         });
     });
+
+    describe('binImageCarouselHeroController', function () {
+        var ctrl, service, getImagesDeferred;
+
+        beforeEach(inject(function ($controller, $q) {
+            getImagesDeferred = $q.defer();
+            service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
+            service.getImages.andReturn(getImagesDeferred.promise);
+
+            ctrl = $controller('binImageCarouselHeroController', {
+                binImageCarousel: service
+            });
+        }));
+
+        describe('on init', function () {
+            var args = {
+                id: '/carousel/id',
+                items: ['item1', 'item2', 'item3']
+            };
+
+            beforeEach(function () {
+                ctrl.init(args);
+            });
+
+            it('get images from service', function () {
+                expect(service.getImages).toHaveBeenCalledWith({
+                    carouselId: args.id,
+                    prefetchedItems: args.items
+                });
+            });
+
+            it('first image is set as hero image', function () {
+                getImagesDeferred.resolve(args.items);
+
+                $rootScope.$digest();
+
+                expect(ctrl.image).toEqual(args.items[0]);
+            });
+        });
+    });
 });
