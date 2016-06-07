@@ -73,7 +73,7 @@ describe('image carousel', function () {
                 addImageRejected = undefined;
 
                 uploadDeferred = $q.defer();
-                imageManagement.upload.andReturn(uploadDeferred.promise);
+                imageManagement.upload.and.returnValue(uploadDeferred.promise);
 
                 service.addImage({
                     carouselId: '/carousel/id'
@@ -99,8 +99,8 @@ describe('image carousel', function () {
                 var file = 'file';
 
                 beforeEach(function () {
-                    imageManagement.validate.andReturn([]);
-                    imageManagement.fileUpload.calls[0].args[0].add(null, file);
+                    imageManagement.validate.and.returnValue([]);
+                    imageManagement.fileUpload.calls.first().args[0].add(null, file);
                 });
 
                 it('file is validated', function () {
@@ -149,8 +149,8 @@ describe('image carousel', function () {
                 var violation = ['invalid'];
 
                 beforeEach(function () {
-                    imageManagement.validate.andReturn(violation);
-                    imageManagement.fileUpload.calls[0].args[0].add(null, file);
+                    imageManagement.validate.and.returnValue(violation);
+                    imageManagement.fileUpload.calls.first().args[0].add(null, file);
 
                     $rootScope.$digest();
                 });
@@ -169,7 +169,7 @@ describe('image carousel', function () {
                 config.baseUri = 'base/uri/';
 
                 restDeferred = $q.defer();
-                rest.andReturn(restDeferred.promise);
+                rest.and.returnValue(restDeferred.promise);
 
                 service.deleteImage('/image/id').then(function () {
                     imageDeleted = true;
@@ -211,9 +211,9 @@ describe('image carousel', function () {
             scope = $rootScope.$new();
             element = 'element';
             service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
-            service.getImages.andReturn(getImagesDeferred.promise);
-            service.addImage.andReturn(addImageDeferred.promise);
-            service.deleteImage.andReturn(deleteImageDeferred.promise);
+            service.getImages.and.returnValue(getImagesDeferred.promise);
+            service.addImage.and.returnValue(addImageDeferred.promise);
+            service.deleteImage.and.returnValue(deleteImageDeferred.promise);
 
             ctrl = $controller('binImageCarouselController', {
                 $scope: scope,
@@ -272,7 +272,7 @@ describe('image carousel', function () {
 
             describe('on edit', function () {
                 beforeEach(function () {
-                    editMode.bindEvent.calls[0].args[0].onClick();
+                    editMode.bindEvent.calls.first().args[0].onClick();
                 });
 
                 it('editModeRenderer is called', function () {
@@ -283,7 +283,7 @@ describe('image carousel', function () {
                     var rendererScope;
 
                     beforeEach(function () {
-                        rendererScope = editModeRenderer.open.calls[0].args[0].scope;
+                        rendererScope = editModeRenderer.open.calls.first().args[0].scope;
                     });
 
                     it('images are on scope', function () {
@@ -407,7 +407,7 @@ describe('image carousel', function () {
 
             describe('on edit', function () {
                 beforeEach(function () {
-                    editMode.bindEvent.calls[0].args[0].onClick();
+                    editMode.bindEvent.calls.first().args[0].onClick();
                 });
 
                 it('add image on service is called', function () {
@@ -425,7 +425,7 @@ describe('image carousel', function () {
         beforeEach(inject(function ($controller, $q) {
             getImagesDeferred = $q.defer();
             service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
-            service.getImages.andReturn(getImagesDeferred.promise);
+            service.getImages.and.returnValue(getImagesDeferred.promise);
 
             ctrl = $controller('binImageCarouselHeroController', {
                 binImageCarousel: service

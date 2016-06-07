@@ -1,0 +1,7 @@
+{
+  "default": {
+    "image.carousel": "bower_components/binarta.image.carousel.angular/src/image.carousel.js",
+    "image.carousel.tpls": "bower_components/binarta.image.carousel.angular/src/image-carousel-tpls-bootstrap3.js",
+    "image.carousel.clerk.tpls": "bower_components/binarta.image.carousel.angular/src/image-carousel-clerk-tpls-bootstrap3.js"
+  }
+}
