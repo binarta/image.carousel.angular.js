@@ -1,8 +1,8 @@
 <div class="bin-image-carousel">
     <carousel>
         <slide ng-repeat="image in ctrl.images">
-            <img bin-image="{{::image.path}}" read-only seo-image ng-if="::$index == 0">
-            <img bin-image="{{::image.path}}" read-only ng-if="::$index != 0">
+            <bin-image-enlarged code="{{::image.path}}" read-only seo-image ng-if="::$index == 0"></bin-image-enlarged>
+            <bin-image-enlarged code="{{::image.path}}" read-only ng-if="::$index != 0"></bin-image-enlarged>
         </slide>
     </carousel>
 
