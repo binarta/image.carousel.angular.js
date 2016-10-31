@@ -19,7 +19,7 @@
 
             imageManagement.fileUpload({
                 dataType: 'json',
-                add: function(e, d) {
+                add: function (e, d) {
                     var violations = imageManagement.validate(d);
                     if (violations.length > 0) deferred.reject(violations);
                     else {
@@ -93,7 +93,7 @@
 
     function BinImageCarouselController($scope, $element, binImageCarousel, editMode, editModeRenderer, $templateCache) {
         var self = this;
-        var limit = 10;
+        var limit = 20;
 
         binImageCarousel.getImages({
             carouselId: self.id,
@@ -116,7 +116,7 @@
             scope.addImage = function () {
                 resetViolation();
 
-                if (self.images.length >= 10) {
+                if (self.images.length >= limit) {
                     scope.violations.push('images.upperbound');
                 } else {
                     binImageCarousel.addImage({carouselId: self.id}).then(function (result) {
@@ -142,7 +142,7 @@
                     scope.working = false;
                 });
             };
-            
+
             scope.openImage = function (image) {
                 resetViolation();
                 scope.openedImage = image;
@@ -152,7 +152,7 @@
                 resetViolation();
                 scope.openedImage = undefined;
             };
-            
+
             scope.close = editModeRenderer.close;
 
             if (self.images.length == 0) scope.addImage();

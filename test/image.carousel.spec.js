@@ -307,7 +307,7 @@ describe('image carousel', function () {
                                 carouselId: carouselId
                             });
                         });
-                        
+
                         it('on success', function () {
                             var image = {
                                 id: '/new/image',
@@ -334,7 +334,7 @@ describe('image carousel', function () {
                         describe('when limit is reached', function () {
                             beforeEach(function () {
                                 ctrl.images = [];
-                                for(var i = 1; i <= 10; i ++) {
+                                for(var i = 1; i <= 20; i ++) {
                                     ctrl.images.push({
                                         path: 'item/id/' + i + '.img',
                                         id: '/item/id/' + i + '.img',
