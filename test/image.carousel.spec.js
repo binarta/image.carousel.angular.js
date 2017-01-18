@@ -126,7 +126,7 @@ describe('image carousel', function () {
         }));
 
         it('restricted on', function () {
-            expect(directive.restrict).toEqual(['E', 'A', 'C']);
+            expect(directive.restrict).toEqual('EAC');
         });
 
         it('scope', function () {

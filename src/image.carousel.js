@@ -49,7 +49,7 @@ function FetchImageCarouselFactory(config, scopedRestServiceHandler) {
 
 function ImageCarouselDirectiveFactory() {
     return {
-        restrict: ['E', 'A', 'C'],
+        restrict: 'EAC',
         scope: true,
         controller: ['$scope', 'fetchImageCarousel', 'updateImageCarousel', ImageCarouselController],
         link: function (scope, els, attrs, ctrl) {
