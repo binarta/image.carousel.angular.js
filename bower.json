@@ -1,12 +1,7 @@
 {
   "name": "binarta.image.carousel.angular",
   "main": [
-    "./src/image.carousel.js",
-    "./src/image-carousel-tpls-bootstrap3.js",
-    "./src/image-carousel-clerk-tpls-bootstrap3.js",
-    "./less/image-carousel.less",
-    "./less/image-carousel-clerk.less",
-    "./sources.json"
+    "./src/image.carousel.js"
   ],
   "dependencies": {
     "binarta.angularx": "0.*.*",
@@ -15,6 +10,7 @@
     "binarta.rest.client.angular": "0.*.*",
     "binarta.toggle.edit.mode.angular": "1.*.*",
     "binarta.notifications.angular": "1.*.*",
+    "binarta.ui.bootstrap.ex.angular": "0.*.*",
     "binarta.style.guide": "0.*.*"
   },
   "devDependencies": {

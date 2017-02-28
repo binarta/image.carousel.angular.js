@@ -196,26 +196,32 @@ describe('image carousel', function () {
     });
 
     describe('binImageCarouselController', function () {
-        var ctrl, scope, element, service, editMode, editModeRenderer;
+        var $ctrl, scope, element, service, editMode, editModeRenderer, topics;
         var getImagesDeferred, addImageDeferred, deleteImageDeferred;
-        var carouselId = '/carousel/id';
+        var carouselId = '/carousel/id', angularSpy, carouselSpy;
 
-        beforeEach(inject(function ($controller, $q, _editMode_, _editModeRenderer_) {
+        beforeEach(inject(function ($controller, $q, _editMode_, _editModeRenderer_, topicRegistryMock) {
             editMode = _editMode_;
             editModeRenderer = _editModeRenderer_;
+            topics = topicRegistryMock;
 
             getImagesDeferred = $q.defer();
             addImageDeferred = $q.defer();
             deleteImageDeferred = $q.defer();
 
             scope = $rootScope.$new();
-            element = 'element';
+            element = [{
+                querySelector: jasmine.createSpy('spy')
+            }];
+            carouselSpy = jasmine.createSpyObj('element', ['carousel']);
+            angularSpy = spyOn(angular, 'element').and.returnValue(carouselSpy);
+
             service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
             service.getImages.and.returnValue(getImagesDeferred.promise);
             service.addImage.and.returnValue(addImageDeferred.promise);
             service.deleteImage.and.returnValue(deleteImageDeferred.promise);
 
-            ctrl = $controller('binImageCarouselController', {
+            $ctrl = $controller('binImageCarouselController', {
                 $scope: scope,
                 $element: element,
                 binImageCarousel: service
@@ -223,6 +229,33 @@ describe('image carousel', function () {
                 id: carouselId
             });
         }));
+
+        afterEach(function () {
+            angularSpy.and.callThrough();
+        });
+
+        it('subscribed to edit.mode event', function () {
+            expect($ctrl.editing).toBeFalsy();
+            topics['edit.mode'](true);
+            expect($ctrl.editing).toBeTruthy();
+            topics['edit.mode'](false);
+            expect($ctrl.editing).toBeFalsy();
+        });
+
+        it('initialize bootstrap carousel', function () {
+            expect(element[0].querySelector).toHaveBeenCalledWith('.carousel');
+            expect(carouselSpy.carousel).toHaveBeenCalledWith({interval: false});
+        });
+
+        it('on next item', function () {
+            $ctrl.next();
+            expect(carouselSpy.carousel).toHaveBeenCalledWith('next');
+        });
+
+        it('on previous item', function () {
+            $ctrl.previous();
+            expect(carouselSpy.carousel).toHaveBeenCalledWith('prev');
+        });
 
         it('images are requested', function () {
             expect(service.getImages).toHaveBeenCalledWith({
@@ -233,7 +266,7 @@ describe('image carousel', function () {
 
         describe('with initial items', function () {
             beforeEach(inject(function ($controller) {
-                ctrl = $controller('binImageCarouselController', {
+                $ctrl = $controller('binImageCarouselController', {
                     $scope: scope,
                     $element: element,
                     binImageCarousel: service
@@ -258,7 +291,7 @@ describe('image carousel', function () {
             });
 
             it('images are on controller', function () {
-                expect(ctrl.images).toEqual(images);
+                expect($ctrl.images).toEqual(images);
             });
 
             it('edit mode event is bound', function () {
@@ -287,7 +320,7 @@ describe('image carousel', function () {
                     });
 
                     it('images are on scope', function () {
-                        rendererScope.images = ctrl.images;
+                        rendererScope.images = $ctrl.images;
                     });
 
                     describe('on add image', function () {
@@ -317,7 +350,7 @@ describe('image carousel', function () {
                             addImageDeferred.resolve(image);
                             rendererScope.$digest();
 
-                            expect(ctrl.images[3]).toEqual(image);
+                            expect($ctrl.images[3]).toEqual(image);
                             expect(rendererScope.working).toBeFalsy();
                         });
 
@@ -333,9 +366,9 @@ describe('image carousel', function () {
 
                         describe('when limit is reached', function () {
                             beforeEach(function () {
-                                ctrl.images = [];
+                                $ctrl.images = [];
                                 for(var i = 1; i <= 20; i ++) {
-                                    ctrl.images.push({
+                                    $ctrl.images.push({
                                         path: 'item/id/' + i + '.img',
                                         id: '/item/id/' + i + '.img',
                                         priority: i
@@ -355,7 +388,7 @@ describe('image carousel', function () {
                         var image;
 
                         beforeEach(function () {
-                            image = ctrl.images[0];
+                            image = $ctrl.images[0];
 
                             rendererScope.deleteImage(image);
                         });
@@ -372,7 +405,7 @@ describe('image carousel', function () {
                             deleteImageDeferred.resolve();
                             rendererScope.$digest();
 
-                            expect(ctrl.images[0]).not.toEqual(image);
+                            expect($ctrl.images[0]).not.toEqual(image);
                             expect(rendererScope.openedImage).toBeUndefined();
                             expect(rendererScope.working).toBeFalsy();
                         });
