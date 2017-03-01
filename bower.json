@@ -10,7 +10,6 @@
     "binarta.rest.client.angular": "0.*.*",
     "binarta.toggle.edit.mode.angular": "1.*.*",
     "binarta.notifications.angular": "1.*.*",
-    "binarta.ui.bootstrap.ex.angular": "0.*.*",
     "binarta.style.guide": "0.*.*"
   },
   "devDependencies": {
