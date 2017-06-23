@@ -7,11 +7,14 @@
 
     function BinImageCarouselService($q, $filter, config, imageManagement, rest) {
         this.getImages = function (args) {
-            var deferred = $q.defer();
             var items = [];
             if (args && args.prefetchedItems) items = args.prefetchedItems;
-            deferred.resolve(sanitizeItems(items));
-            return deferred.promise;
+            return sanitizeItems(items);
+        };
+
+        this.getHeroImage = function (args) {
+            var images = this.getImages(args);
+            return images.length > 0 ? images[0] : undefined;
         };
 
         this.addImage = function (args) {
@@ -107,18 +110,13 @@
             };
         }
 
-        binImageCarousel.getImages({
-            carouselId: $ctrl.id,
-            prefetchedItems: $ctrl.items
-        }).then(function (images) {
-            $ctrl.images = images;
+        $ctrl.images = binImageCarousel.getImages({prefetchedItems: $ctrl.items});
 
-            editMode.bindEvent({
-                scope: $scope,
-                element: $element,
-                permission: 'edit.mode',
-                onClick: onEdit
-            });
+        editMode.bindEvent({
+            scope: $scope,
+            element: $element,
+            permission: 'edit.mode',
+            onClick: onEdit
         });
 
         function onEdit() {
@@ -148,7 +146,7 @@
 
                 scope.working = true;
                 binImageCarousel.deleteImage(image.id).then(function () {
-                    if ($ctrl.images.indexOf(image) != -1) $ctrl.images.splice($ctrl.images.indexOf(image), 1);
+                    if ($ctrl.images.indexOf(image) !== -1) $ctrl.images.splice($ctrl.images.indexOf(image), 1);
                     scope.openedImage = undefined;
                 }).finally(function () {
                     scope.working = false;
@@ -167,7 +165,7 @@
 
             scope.close = editModeRenderer.close;
 
-            if ($ctrl.images.length == 0) scope.addImage();
+            if ($ctrl.images.length === 0) scope.addImage();
 
             editModeRenderer.open({
                 templateUrl: 'bin-image-carousel-edit.html',
@@ -184,12 +182,7 @@
         var self = this;
 
         this.init = function (args) {
-            binImageCarousel.getImages({
-                carouselId: args.id,
-                prefetchedItems: args.items
-            }).then(function (images) {
-                if (images.length > 0) self.image = images[0];
-            });
+            self.image = binImageCarousel.getHeroImage({prefetchedItems: args.items});
         };
     }
 })();

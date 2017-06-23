@@ -4,11 +4,11 @@ describe('image carousel', function () {
     var $rootScope;
     var initialItems = [
         {
-            id: '/item/id/1.img',
-            priority: 1
-        }, {
             id: '/item/id/3.img',
             priority: 3
+        }, {
+            id: '/item/id/1.img',
+            priority: 1
         }, {
             id: '/item/id/2.img',
             priority: 2
@@ -35,10 +35,10 @@ describe('image carousel', function () {
     }));
 
     describe('binImageCarousel service', function () {
-        var service, imageManagement;
+        var sut, imageManagement;
 
         beforeEach(inject(function (binImageCarousel, _imageManagement_) {
-            service = binImageCarousel;
+            sut = binImageCarousel;
             imageManagement = _imageManagement_;
         }));
 
@@ -47,22 +47,37 @@ describe('image carousel', function () {
 
             describe('with initial items', function () {
                 beforeEach(function () {
-                    images = undefined;
-
-                    service.getImages({
-                        prefetchedItems: initialItems
-                    }).then(function (result) {
-                        images = result;
-                    });
+                    images = sut.getImages({prefetchedItems: initialItems});
                 });
 
                 it('items are ordered and image paths are added', function () {
-                    $rootScope.$digest();
-
                     expect(images).toEqual(images);
                 });
             });
+        });
 
+        describe('on get hero image', function () {
+            var image;
+
+            describe('when no items', function () {
+                beforeEach(function () {
+                    image = sut.getHeroImage({prefetchedItems: []});
+                });
+
+                it('no hero image', function () {
+                    expect(image).toBeUndefined();
+                });
+            });
+
+            describe('with initial items', function () {
+                beforeEach(function () {
+                    image = sut.getHeroImage({prefetchedItems: initialItems});
+                });
+
+                it('hero image is available', function () {
+                    expect(image).toEqual(initialItems[1]);
+                });
+            });
         });
 
         describe('on add image', function () {
@@ -75,7 +90,7 @@ describe('image carousel', function () {
                 uploadDeferred = $q.defer();
                 imageManagement.upload.and.returnValue(uploadDeferred.promise);
 
-                service.addImage({
+                sut.addImage({
                     carouselId: '/carousel/id'
                 }).then(function (result) {
                     addImageResolved = result;
@@ -171,7 +186,7 @@ describe('image carousel', function () {
                 restDeferred = $q.defer();
                 rest.and.returnValue(restDeferred.promise);
 
-                service.deleteImage('/image/id').then(function () {
+                sut.deleteImage('/image/id').then(function () {
                     imageDeleted = true;
                 });
             }));
@@ -197,7 +212,7 @@ describe('image carousel', function () {
 
     describe('binImageCarouselController', function () {
         var $ctrl, scope, element, service, editMode, editModeRenderer, topics;
-        var getImagesDeferred, addImageDeferred, deleteImageDeferred;
+        var addImageDeferred, deleteImageDeferred;
         var carouselId = '/carousel/id', angularSpy, carouselSpy;
 
         beforeEach(inject(function ($controller, $q, _editMode_, _editModeRenderer_, topicRegistryMock) {
@@ -205,7 +220,6 @@ describe('image carousel', function () {
             editModeRenderer = _editModeRenderer_;
             topics = topicRegistryMock;
 
-            getImagesDeferred = $q.defer();
             addImageDeferred = $q.defer();
             deleteImageDeferred = $q.defer();
 
@@ -217,7 +231,7 @@ describe('image carousel', function () {
             angularSpy = spyOn(angular, 'element').and.returnValue(carouselSpy);
 
             service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
-            service.getImages.and.returnValue(getImagesDeferred.promise);
+            service.getImages.and.returnValue([]);
             service.addImage.and.returnValue(addImageDeferred.promise);
             service.deleteImage.and.returnValue(deleteImageDeferred.promise);
 
@@ -259,13 +273,34 @@ describe('image carousel', function () {
 
         it('images are requested', function () {
             expect(service.getImages).toHaveBeenCalledWith({
-                carouselId: carouselId,
                 prefetchedItems: undefined
+            });
+        });
+
+        it('edit mode event is bound', function () {
+            expect(editMode.bindEvent).toHaveBeenCalledWith({
+                scope: scope,
+                element: element,
+                permission: 'edit.mode',
+                onClick: jasmine.any(Function)
+            });
+        });
+
+        describe('on edit', function () {
+            beforeEach(function () {
+                editMode.bindEvent.calls.mostRecent().args[0].onClick();
+            });
+
+            it('add image on service is called', function () {
+                expect(service.addImage).toHaveBeenCalledWith({
+                    carouselId: carouselId
+                });
             });
         });
 
         describe('with initial items', function () {
             beforeEach(inject(function ($controller) {
+                service.getImages.and.returnValue(images);
                 $ctrl = $controller('binImageCarouselController', {
                     $scope: scope,
                     $element: element,
@@ -278,34 +313,17 @@ describe('image carousel', function () {
 
             it('images are requested', function () {
                 expect(service.getImages).toHaveBeenCalledWith({
-                    carouselId: carouselId,
                     prefetchedItems: initialItems
                 });
-            });
-        });
-
-        describe('with images', function () {
-            beforeEach(function () {
-                getImagesDeferred.resolve(images);
-                $rootScope.$digest();
             });
 
             it('images are on controller', function () {
                 expect($ctrl.images).toEqual(images);
             });
 
-            it('edit mode event is bound', function () {
-                expect(editMode.bindEvent).toHaveBeenCalledWith({
-                    scope: scope,
-                    element: element,
-                    permission: 'edit.mode',
-                    onClick: jasmine.any(Function)
-                });
-            });
-
             describe('on edit', function () {
                 beforeEach(function () {
-                    editMode.bindEvent.calls.first().args[0].onClick();
+                    editMode.bindEvent.calls.mostRecent().args[0].onClick();
                 });
 
                 it('editModeRenderer is called', function () {
@@ -431,25 +449,6 @@ describe('image carousel', function () {
                 });
             });
         });
-
-        describe('when there are no images', function () {
-            beforeEach(function () {
-                getImagesDeferred.resolve([]);
-                $rootScope.$digest();
-            });
-
-            describe('on edit', function () {
-                beforeEach(function () {
-                    editMode.bindEvent.calls.first().args[0].onClick();
-                });
-
-                it('add image on service is called', function () {
-                    expect(service.addImage).toHaveBeenCalledWith({
-                        carouselId: carouselId
-                    });
-                });
-            });
-        });
     });
 
     describe('binImageCarouselHeroController', function () {
@@ -457,9 +456,8 @@ describe('image carousel', function () {
 
         beforeEach(inject(function ($controller, $q) {
             getImagesDeferred = $q.defer();
-            service = jasmine.createSpyObj('binImageCarousel', ['getImages', 'addImage', 'deleteImage']);
-            service.getImages.and.returnValue(getImagesDeferred.promise);
-
+            service = jasmine.createSpyObj('binImageCarousel', ['getHeroImage']);
+            service.getHeroImage.and.returnValue('hero');
             ctrl = $controller('binImageCarouselHeroController', {
                 binImageCarousel: service
             });
@@ -476,18 +474,13 @@ describe('image carousel', function () {
             });
 
             it('get images from service', function () {
-                expect(service.getImages).toHaveBeenCalledWith({
-                    carouselId: args.id,
+                expect(service.getHeroImage).toHaveBeenCalledWith({
                     prefetchedItems: args.items
                 });
             });
 
-            it('first image is set as hero image', function () {
-                getImagesDeferred.resolve(args.items);
-
-                $rootScope.$digest();
-
-                expect(ctrl.image).toEqual(args.items[0]);
+            it('hero image is available', function () {
+                expect(ctrl.image).toEqual('hero');
             });
         });
     });
