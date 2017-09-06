@@ -3,7 +3,8 @@
         .service('binImageCarousel', ['$q', '$filter', 'config', 'imageManagement', 'restServiceHandler', BinImageCarouselService])
         .controller('binImageCarouselController', ['$scope', '$element', 'binImageCarousel', 'editMode', 'editModeRenderer', 'ngRegisterTopicHandler', BinImageCarouselController])
         .controller('binImageCarouselHeroController', ['binImageCarousel', BinImageCarouselHeroController])
-        .directive('binImageCarousel', BinImageCarouselDirective);
+        .directive('binImageCarousel', BinImageCarouselDirective)
+        .component('binImageCarousel', new BinImageCarouselComponent());
 
     function BinImageCarouselService($q, $filter, config, imageManagement, rest) {
         this.getImages = function (args) {
@@ -87,6 +88,19 @@
             bindToController: true,
             templateUrl: 'bin-image-carousel.html'
         }
+    }
+
+    function BinImageCarouselComponent() {
+        this.templateUrl = ['$attrs', function ($attrs) {
+            return $attrs.templateUrl || 'bin-image-carousel.html';
+        }];
+
+        this.bindings = {
+            id: '=itemId',
+            items: '='
+        };
+
+        this.controller = 'binImageCarouselController';
     }
 
     function BinImageCarouselController($scope, $element, binImageCarousel, editMode, editModeRenderer, topics) {
