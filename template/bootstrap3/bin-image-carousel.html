@@ -1,5 +1,5 @@
 <div class="bin-image-carousel">
-    <div class="carousel slide">
+    <div class="carousel slide" ng-if="!$ctrl.templateUrl">
         <div class="carousel-inner" role="listbox">
             <div class="item" ng-class="{active: $first}" ng-repeat="image in $ctrl.images">
                 <bin-image-enlarged code="{{::image.path}}" read-only seo-image ng-if="::$index == 0"></bin-image-enlarged>
@@ -18,6 +18,8 @@
             </a>
         </div>
     </div>
+
+    <ng-include src="$ctrl.templateUrl" ng-if="::$ctrl.templateUrl"></ng-include>
 
     <div class="image-placeholder" ng-if="$ctrl.editing && $ctrl.images.length == 0">
         <i class="fa fa-camera fa-3x"></i>

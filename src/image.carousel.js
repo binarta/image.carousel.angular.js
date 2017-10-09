@@ -91,13 +91,12 @@
     }
 
     function BinImageCarouselComponent() {
-        this.templateUrl = ['$attrs', function ($attrs) {
-            return $attrs.templateUrl || 'bin-image-carousel.html';
-        }];
+        this.templateUrl = 'bin-image-carousel.html';
 
         this.bindings = {
             id: '=itemId',
-            items: '='
+            items: '=',
+            templateUrl: '@'
         };
 
         this.controller = 'binImageCarouselController';

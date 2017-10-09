@@ -1,7 +1,7 @@
 @import "../../binarta.style.guide/less/variables";
 
 .bin-image-carousel {
-  .image-placeholder {
+  > .image-placeholder {
     height: 200px;
     color: @bin-gray;
     background-color: rgba(0, 0, 0, 0.02);
@@ -20,19 +20,21 @@
     }
   }
 
-  .item {
-    img {
-      margin: 0 auto;
+  > .carousel {
+    .item {
+      img {
+        margin: 0 auto;
+      }
     }
-  }
 
-  .carousel-control {
-    &:hover {
-      cursor: pointer;
+    .carousel-control {
+      &:hover {
+        cursor: pointer;
+      }
     }
-  }
 
-  .carousel-indicators li {
-    visibility: hidden;
+    .carousel-indicators li {
+      visibility: hidden;
+    }
   }
 }
