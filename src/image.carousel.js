@@ -86,7 +86,7 @@
             controller: 'binImageCarouselController',
             controllerAs: '$ctrl',
             bindToController: true,
-            templateUrl: 'bin-image-carousel.html'
+            templateUrl: 'bin-image-carousel-legacy.html'
         }
     }
 
