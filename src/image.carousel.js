@@ -1,7 +1,7 @@
 (function () {
     angular.module('image.carousel', ['config', 'image-management', 'rest.client', 'toggle.edit.mode', 'notifications'])
         .service('binImageCarousel', ['$q', '$filter', 'config', 'imageManagement', 'restServiceHandler', BinImageCarouselService])
-        .controller('binImageCarouselController', ['$scope', '$element', 'binImageCarousel', 'editMode', 'editModeRenderer', 'ngRegisterTopicHandler', BinImageCarouselController])
+        .controller('binImageCarouselController', ['$scope', '$element', 'binImageCarousel', 'editModeRenderer', 'ngRegisterTopicHandler', BinImageCarouselController])
         .controller('binImageCarouselHeroController', ['binImageCarousel', BinImageCarouselHeroController])
         .directive('binImageCarousel', BinImageCarouselDirective)
         .component('binImageCarousel', new BinImageCarouselComponent());
@@ -102,7 +102,7 @@
         this.controller = 'binImageCarouselController';
     }
 
-    function BinImageCarouselController($scope, $element, binImageCarousel, editMode, editModeRenderer, topics) {
+    function BinImageCarouselController($scope, $element, binImageCarousel, editModeRenderer, topics) {
         var $ctrl = this;
         var limit = 20;
 
@@ -125,14 +125,7 @@
 
         $ctrl.images = binImageCarousel.getImages({prefetchedItems: $ctrl.items});
 
-        editMode.bindEvent({
-            scope: $scope,
-            element: $element,
-            permission: 'edit.mode',
-            onClick: onEdit
-        });
-
-        function onEdit() {
+        $ctrl.edit = function () {
             var scope = $scope.$new();
             scope.images = $ctrl.images;
 
@@ -188,7 +181,7 @@
             function resetViolation() {
                 scope.violations = [];
             }
-        }
+        };
     }
 
     function BinImageCarouselHeroController(binImageCarousel) {

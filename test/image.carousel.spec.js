@@ -211,12 +211,11 @@ describe('image carousel', function () {
     });
 
     describe('binImageCarouselController', function () {
-        var $ctrl, scope, element, service, editMode, editModeRenderer, topics;
+        var $ctrl, scope, element, service, editModeRenderer, topics;
         var addImageDeferred, deleteImageDeferred;
         var carouselId = '/carousel/id', angularSpy, carouselSpy;
 
-        beforeEach(inject(function ($controller, $q, _editMode_, _editModeRenderer_, topicRegistryMock) {
-            editMode = _editMode_;
+        beforeEach(inject(function ($controller, $q, _editModeRenderer_, topicRegistryMock) {
             editModeRenderer = _editModeRenderer_;
             topics = topicRegistryMock;
 
@@ -277,18 +276,9 @@ describe('image carousel', function () {
             });
         });
 
-        it('edit mode event is bound', function () {
-            expect(editMode.bindEvent).toHaveBeenCalledWith({
-                scope: scope,
-                element: element,
-                permission: 'edit.mode',
-                onClick: jasmine.any(Function)
-            });
-        });
-
         describe('on edit', function () {
             beforeEach(function () {
-                editMode.bindEvent.calls.mostRecent().args[0].onClick();
+                $ctrl.edit();
             });
 
             it('add image on service is called', function () {
@@ -323,7 +313,7 @@ describe('image carousel', function () {
 
             describe('on edit', function () {
                 beforeEach(function () {
-                    editMode.bindEvent.calls.mostRecent().args[0].onClick();
+                    $ctrl.edit();
                 });
 
                 it('editModeRenderer is called', function () {
