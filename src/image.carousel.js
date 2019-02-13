@@ -96,7 +96,9 @@
         this.bindings = {
             id: '=itemId',
             items: '=',
-            templateUrl: '@'
+            templateUrl: '@',
+            aspectRatio: '=',
+            fittingRule: '='
         };
 
         this.controller = 'binImageCarouselController';
@@ -112,7 +114,7 @@
 
         var element = angular.element($element[0].querySelector('.carousel'));
         if (element.carousel) {
-            element.carousel({interval:false});
+            element.carousel({interval: false});
 
             $ctrl.previous = function () {
                 element.carousel('prev');
