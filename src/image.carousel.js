@@ -125,7 +125,30 @@
             };
         }
 
-        $ctrl.images = binImageCarousel.getImages({prefetchedItems: $ctrl.items});
+
+        $ctrl.$onInit = function() {
+            $ctrl.images = binImageCarousel.getImages({prefetchedItems: $ctrl.items});
+            $ctrl.images = binImageCarousel.getImages({prefetchedItems: $ctrl.items}).map(function(image) {
+                return angular.extend({}, image, {
+                    aspectRatio: $ctrl.aspectRatio,
+                    fittingRule: $ctrl.fittingRule
+                })
+            });
+        };
+
+        function isAttributeChanged(changes, attribute) {
+            return changes[attribute] && changes[attribute].currentValue !== changes[attribute].previousValue && !changes[attribute].isFirstChange();
+        }
+
+        $ctrl.$onChanges = function(changes) {
+            ['aspectRatio', 'fittingRule'].forEach(function(attribute) {
+                if (isAttributeChanged(changes, attribute)) {
+                    $ctrl.images.forEach(function(image) {
+                        image[attribute] = changes[attribute].currentValue;
+                    })
+                }
+            });
+        };
 
         $ctrl.edit = function () {
             var scope = $scope.$new();

@@ -270,14 +270,21 @@ describe('image carousel', function () {
             expect(carouselSpy.carousel).toHaveBeenCalledWith('prev');
         });
 
-        it('images are requested', function () {
-            expect(service.getImages).toHaveBeenCalledWith({
-                prefetchedItems: undefined
+        describe('on init', function() {
+            beforeEach(function() {
+                $ctrl.$onInit();
+            });
+
+            it('images are requested', function () {
+                expect(service.getImages).toHaveBeenCalledWith({
+                    prefetchedItems: undefined
+                });
             });
         });
 
         describe('on edit', function () {
             beforeEach(function () {
+                $ctrl.$onInit();
                 $ctrl.edit();
             });
 
@@ -290,6 +297,9 @@ describe('image carousel', function () {
 
         describe('with initial items', function () {
             beforeEach(inject(function ($controller) {
+                this.aspectRatio = '4:3';
+                this.fittingRule = 'contains';
+
                 service.getImages.and.returnValue(images);
                 $ctrl = $controller('binImageCarouselController', {
                     $scope: scope,
@@ -297,8 +307,11 @@ describe('image carousel', function () {
                     binImageCarousel: service
                 }, {
                     id: carouselId,
-                    items: initialItems
+                    items: initialItems,
+                    aspectRatio: this.aspectRatio,
+                    fittingRule: this.fittingRule
                 });
+                $ctrl.$onInit();
             }));
 
             it('images are requested', function () {
@@ -308,7 +321,40 @@ describe('image carousel', function () {
             });
 
             it('images are on controller', function () {
-                expect($ctrl.images).toEqual(images);
+                expect($ctrl.images).toEqual(images.map(function(image) {
+                    return angular.extend({}, image, {
+                        aspectRatio: this.aspectRatio,
+                        fittingRule: this.fittingRule
+                    })
+                }.bind(this)));
+            });
+
+            it('updates the aspectRatio on all images when it changes', function() {
+                $ctrl.$onChanges({aspectRatio: {
+                        previousValue: '4:3',
+                        currentValue: '18:9',
+                        isFirstChange: function() { return false}
+                    }});
+
+                var aspectRatios = $ctrl.images.map(function(image) {
+                    return image.aspectRatio;
+                });
+
+                expect(aspectRatios.every(function(aspectRatio) {return aspectRatio === '18:9'})).toBe(true);
+            });
+
+            it('updates the fittingRule on all images when it changes', function() {
+                $ctrl.$onChanges({fittingRule: {
+                    previousValue: 'contains',
+                        currentValue: 'cover',
+                        isFirstChange: function() { return false}
+                    }});
+
+                var fittingRules = $ctrl.images.map(function(image) {
+                    return image.fittingRule;
+                });
+
+                expect(fittingRules.every(function(fittingRule) { return fittingRule === 'cover'})).toBe(true);
             });
 
             describe('on edit', function () {
