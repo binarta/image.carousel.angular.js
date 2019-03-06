@@ -94,11 +94,11 @@
         this.templateUrl = 'bin-image-carousel.html';
 
         this.bindings = {
-            id: '=itemId',
-            items: '=',
+            id: '<itemId',
+            items: '<',
             templateUrl: '@',
-            aspectRatio: '=',
-            fittingRule: '='
+            aspectRatio: '<',
+            fittingRule: '<'
         };
 
         this.controller = 'binImageCarouselController';
